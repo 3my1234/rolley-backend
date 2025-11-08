@@ -1,3 +1,9 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+src/generated/query_engine-*.node
 # Logs
 logs
 *.log
