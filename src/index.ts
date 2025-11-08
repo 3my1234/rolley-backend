@@ -1,7 +1,7 @@
 import "dotenv/config";
 import express, { Request, Response } from "express";
 import cors from "cors";
-import { PrismaClient } from "./generated";
+import { PrismaClient } from "./generated/index.js";
 
 const prisma = new PrismaClient();
 const app = express();
@@ -70,4 +70,5 @@ const shutdown = async () => {
 
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
+
 

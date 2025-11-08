@@ -15,3 +15,4 @@ model Waitlist {
   createdAt DateTime @default(now())
 }
 
+
