@@ -25,7 +25,10 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Install dumb-init and OpenSSL libraries for Prisma
-RUN apk add --no-cache dumb-init openssl libc6-compat
+# Enable edge repository temporarily for openssl1.1-compat
+RUN apk add --no-cache dumb-init libc6-compat && \
+    apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main openssl1.1-compat || \
+    apk add --no-cache openssl
 
 # Copy package files
 COPY package*.json ./
