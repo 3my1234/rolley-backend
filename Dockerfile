@@ -25,7 +25,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Install dumb-init and OpenSSL libraries for Prisma
-RUN apk add --no-cache dumb-init openssl1.1-compat libc6-compat
+RUN apk add --no-cache dumb-init openssl libc6-compat
 
 # Copy package files
 COPY package*.json ./
