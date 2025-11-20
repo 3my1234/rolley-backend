@@ -1,5 +1,6 @@
 # Multi-stage build for NestJS backend
-FROM node:20-alpine AS builder
+# Using Debian slim instead of Alpine for better Prisma/OpenSSL compatibility
+FROM node:20-slim AS builder
 
 WORKDIR /app
 
@@ -20,15 +21,14 @@ RUN npx prisma generate
 RUN npm run build && ls -la dist/ && echo "Build completed, dist folder contents:" && find dist -name "*.js" | head -10
 
 # Production stage
-FROM node:20-alpine
+FROM node:20-slim
 
 WORKDIR /app
 
 # Install dumb-init and OpenSSL libraries for Prisma
-# Enable edge repository temporarily for openssl1.1-compat
-RUN apk add --no-cache dumb-init libc6-compat && \
-    apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main openssl1.1-compat || \
-    apk add --no-cache openssl
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends dumb-init openssl ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy package files
 COPY package*.json ./
@@ -41,8 +41,8 @@ RUN npm ci --only=production && npm cache clean --force
 RUN npx prisma generate
 
 # Create non-root user first (before copying files)
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nestjs -u 1001
+RUN groupadd -r nodejs -g 1001 && \
+    useradd -r -g nodejs -u 1001 nestjs
 
 # Copy built application from builder
 COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
