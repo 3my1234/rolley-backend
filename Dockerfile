@@ -17,7 +17,7 @@ COPY . .
 RUN npx prisma generate
 
 # Build application
-RUN npm run build
+RUN npm run build && ls -la dist/ && echo "Build completed, dist folder contents:" && find dist -name "*.js" | head -10
 
 # Production stage
 FROM node:20-alpine
@@ -44,6 +44,9 @@ RUN addgroup -g 1001 -S nodejs && \
 # Copy built application from builder
 COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nestjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+
+# Verify dist folder exists and has files
+RUN ls -la dist/ && ls -la dist/main.js || (echo "ERROR: dist/main.js not found!" && find . -name "main.js" || echo "No main.js found anywhere")
 
 # Switch to non-root user
 USER nestjs
