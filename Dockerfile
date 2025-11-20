@@ -46,7 +46,7 @@ COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nestjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 
 # Verify dist folder exists and has files
-RUN ls -la dist/ && ls -la dist/main.js || (echo "ERROR: dist/main.js not found!" && find . -name "main.js" || echo "No main.js found anywhere")
+RUN ls -la dist/src/ && ls -la dist/src/main.js || (echo "ERROR: dist/src/main.js not found!" && find . -name "main.js" || echo "No main.js found anywhere")
 
 # Switch to non-root user
 USER nestjs
@@ -57,9 +57,9 @@ EXPOSE 3003
 
 # Health check (Coolify will also use this)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3003/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" || exit 1
+  CMD node -e "require('http').get('http://localhost:3003/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 # Start application
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/src/main.js"]
 
