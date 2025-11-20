@@ -1,0 +1,62 @@
+import { UsersService } from './users.service';
+export declare class UsersController {
+    private usersService;
+    constructor(usersService: UsersService);
+    getCurrentUser(req: any): Promise<{
+        id: string;
+        email: string | null;
+        privyId: string | null;
+        walletAddress: string | null;
+        referralCode: string | null;
+        password: string | null;
+        role: import(".prisma/client").$Enums.UserRole;
+        firstName: string | null;
+        lastName: string | null;
+        phoneNumber: string | null;
+        usdBalance: number;
+        usdtBalance: number;
+        rolBalance: number;
+        totalRolEarned: number;
+        totalRolSpent: number;
+        signupAirdropClaimed: boolean;
+        firstDepositAirdropClaimed: boolean;
+        firstStakeClaimed: boolean;
+        referredBy: string | null;
+        totalReferrals: number;
+        totalReferralEarnings: number;
+        withdrawalMethod: string | null;
+        withdrawalDetails: import("@prisma/client/runtime/library").JsonValue | null;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    updateCurrentUser(req: any, updateData: any): Promise<{
+        id: string;
+        email: string | null;
+        privyId: string | null;
+        walletAddress: string | null;
+        referralCode: string | null;
+        password: string | null;
+        role: import(".prisma/client").$Enums.UserRole;
+        firstName: string | null;
+        lastName: string | null;
+        phoneNumber: string | null;
+        usdBalance: number;
+        usdtBalance: number;
+        rolBalance: number;
+        totalRolEarned: number;
+        totalRolSpent: number;
+        signupAirdropClaimed: boolean;
+        firstDepositAirdropClaimed: boolean;
+        firstStakeClaimed: boolean;
+        referredBy: string | null;
+        totalReferrals: number;
+        totalReferralEarnings: number;
+        withdrawalMethod: string | null;
+        withdrawalDetails: import("@prisma/client/runtime/library").JsonValue | null;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    getReferralStats(req: any): Promise<{
+        totalReferrals: number;
+    }>;
+}

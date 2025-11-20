@@ -1,0 +1,306 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Currency {
+  USD
+  USDT
+  ROL
+}
+
+enum StakePeriod {
+  THIRTY_DAYS
+  SIXTY_DAYS
+  ONE_EIGHTY_DAYS
+  THREE_SIXTY_FIVE_DAYS
+}
+
+enum StakeStatus {
+  ACTIVE
+  COMPLETED
+  WITHDRAWN
+  CANCELLED
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  STAKE_PROFIT
+  DAILY_ROLLOVER
+  FEE_DEDUCTION
+  TOKEN_REWARD
+  TOKEN_AIRDROP
+  TOKEN_CONVERSION
+  ROL_PURCHASE
+  ROL_SALE
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum DailyEventStatus {
+  PENDING
+  WON
+  LOST
+  VOID
+  NO_MATCHES
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model User {
+  id                String        @id @default(cuid())
+  email             String?       @unique
+  password          String?       // For admin login
+  privyId           String?       @unique
+  walletAddress     String?       @unique
+  role              UserRole      @default(USER)
+  
+  // Profile
+  firstName         String?
+  lastName          String?
+  phoneNumber       String?
+  
+  // Wallet balances
+  usdBalance        Float         @default(0)
+  usdtBalance       Float         @default(0)
+  rolBalance        Float         @default(0) // Rolley token balance
+  
+  // Token tracking
+  totalRolEarned    Float         @default(0) // Lifetime ROL earned
+  totalRolSpent     Float         @default(0) // Lifetime ROL spent/converted
+  
+  // Airdrop eligibility tracking
+  signupAirdropClaimed      Boolean @default(false)
+  firstDepositAirdropClaimed Boolean @default(false)
+  firstStakeClaimed         Boolean @default(false)  // First stake 50 ROL bonus
+  
+  // Referral tracking
+  referralCode              String?  @unique // User's unique referral code
+  referredBy                String?  // ID of user who referred them
+  referredUsers             User[]   @relation("Referrals") // Users they referred
+  referrer                  User?    @relation("Referrals", fields: [referredBy], references: [id])
+  totalReferrals            Int      @default(0)
+  totalReferralEarnings     Float    @default(0) // Total ROL earned from referrals
+  
+  // Withdrawal details
+  withdrawalMethod  String?       // wallet, bank, paypal
+  withdrawalDetails Json?         // Flexible JSON for different methods
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  stakes            Stake[]
+  transactions      Transaction[]
+  tokenRewards      TokenReward[]
+  airdrops          Airdrop[]
+  
+  @@index([email])
+  @@index([privyId])
+  @@index([walletAddress])
+}
+
+model Stake {
+  id                String        @id @default(cuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  currency          Currency
+  initialAmount     Float
+  currentAmount     Float
+  period            StakePeriod
+  status            StakeStatus   @default(ACTIVE)
+  
+  startDate         DateTime      @default(now())
+  endDate           DateTime
+  
+  daysCompleted     Int           @default(0)
+  totalDays         Int
+  
+  // Participation tracking
+  daysParticipated  Int           @default(0)
+  daysSkipped       Int           @default(0)
+  
+  // Profit tracking
+  totalProfit       Float         @default(0)
+  
+  // Token rewards
+  pendingRolReward  Float         @default(0) // ROL to be earned when stake completes
+  rolRewardClaimed  Boolean       @default(false)
+  rolRewardAmount   Float?        // Actual ROL earned (set when claimed)
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  dailyParticipations DailyParticipation[]
+  tokenRewards        TokenReward[]
+  
+  @@index([userId])
+  @@index([status])
+}
+
+model DailyEvent {
+  id                String        @id @default(cuid())
+  date              DateTime
+  
+  sport             String        // football or tennis
+  matches           Json          // Array of match details
+  totalOdds         Float         // Target: 1.05
+  
+  status            DailyEventStatus @default(PENDING)
+  result            String?
+  
+  // AI vs Admin predictions
+  aiPredictions     Json?         // AI-generated predictions (original)
+  adminPredictions  Json?         // Admin-refined predictions
+  adminComments     String?       // Admin notes/improvements
+  adminReviewed     Boolean       @default(false) // Whether admin has reviewed
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  participations    DailyParticipation[]
+  
+  @@index([date])
+  @@index([status])
+  @@index([adminReviewed])
+}
+
+model DailyParticipation {
+  id                String        @id @default(cuid())
+  stakeId           String
+  stake             Stake         @relation(fields: [stakeId], references: [id], onDelete: Cascade)
+  
+  dailyEventId      String
+  dailyEvent        DailyEvent    @relation(fields: [dailyEventId], references: [id], onDelete: Cascade)
+  
+  participated      Boolean       @default(false)
+  amountBefore      Float
+  amountAfter       Float?
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  @@unique([stakeId, dailyEventId])
+  @@index([stakeId])
+  @@index([dailyEventId])
+}
+
+model Transaction {
+  id                String            @id @default(cuid())
+  userId            String
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type              TransactionType
+  currency          Currency
+  amount            Float
+  fee               Float             @default(0)
+  netAmount         Float             // amount - fee
+  
+  status            TransactionStatus @default(PENDING)
+  
+  // External references
+  externalId        String?           @unique // Flutterwave transaction ID, blockchain tx hash
+  paymentMethod     String?           // privy, flutterwave
+  
+  // Additional details
+  description       String?
+  metadata          Json?
+  
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+}
+
+model SystemConfig {
+  id                String   @id @default(cuid())
+  key               String   @unique
+  value             String
+  description       String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model TokenReward {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  stakeId           String?
+  stake             Stake?   @relation(fields: [stakeId], references: [id], onDelete: SetNull)
+  
+  amount            Float    // ROL amount
+  valueUsd          Float    // USD value at time of reward
+  
+  reason            String   // "stake_completion", "manual", etc.
+  metadata          Json?    // Additional details
+  
+  txHash            String?  // Blockchain transaction hash
+  status            String   @default("pending") // pending, completed, failed
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([stakeId])
+  @@index([status])
+}
+
+model Airdrop {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  amount            Float    // ROL amount
+  valueUsd          Float    // USD value at time of airdrop
+  
+  reason            String   // "signup", "first_deposit", "referral", etc.
+  metadata          Json?    // Additional details (e.g., referral info)
+  
+  txHash            String?  // Blockchain transaction hash
+  status            String   @default("pending") // pending, completed, failed
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([reason])
+  @@index([status])
+}
+
+model TokenConversion {
+  id                String   @id @default(cuid())
+  userId            String
+  
+  rolAmount         Float    // ROL being converted
+  usdtAmount        Float    // USDT received
+  conversionRate    Float    // Rate at time of conversion (1 ROL = X USDT)
+  
+  txHash            String?  // Blockchain transaction hash
+  status            String   @default("pending") // pending, completed, failed
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([status])
+}

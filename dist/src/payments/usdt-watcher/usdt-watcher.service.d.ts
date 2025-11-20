@@ -1,0 +1,33 @@
+import { OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { UsdtAddressRegistryService } from './usdt-address-registry.service';
+import { UsdtDepositQueueService } from './usdt-deposit-queue.service';
+import { UsdtWatcherStateService } from './usdt-watcher-state.service';
+export declare class UsdtWatcherService implements OnModuleInit, OnModuleDestroy {
+    private readonly configService;
+    private readonly registry;
+    private readonly queue;
+    private readonly stateService;
+    private readonly logger;
+    private readonly httpProvider;
+    private readonly pollBatchSize;
+    private readonly maxRequestSpan;
+    private readonly maxCatchUpBlocks;
+    private websocketProvider;
+    private readonly usdtInterface;
+    private pollTimer;
+    private reconnectTimer;
+    constructor(configService: ConfigService, registry: UsdtAddressRegistryService, queue: UsdtDepositQueueService, stateService: UsdtWatcherStateService);
+    onModuleInit(): Promise<void>;
+    onModuleDestroy(): Promise<void>;
+    private startPollingLoop;
+    private pollOnce;
+    private processBlockRange;
+    private fetchAndHandleLogs;
+    private isBlockRangeError;
+    private isTimeoutError;
+    private describeError;
+    private startWebsocketListener;
+    private scheduleReconnect;
+    private handleLog;
+}

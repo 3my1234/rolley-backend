@@ -1,0 +1,32 @@
+declare const _default: (() => {
+    polygonRpcUrl: string;
+    amoyRpcUrl: string;
+    mumbaiRpcUrl: string;
+    deployerPrivateKey: string;
+    contractAddress: string;
+    polygonscanApiKey: string;
+    tokenName: string;
+    tokenSymbol: string;
+    tokenDecimals: number;
+    tokenMaxSupply: string;
+    tokenInitialSupply: string;
+    tokenValueUsd: number;
+    network: string;
+    chainId: number;
+}) & import("@nestjs/config").ConfigFactoryKeyHost<{
+    polygonRpcUrl: string;
+    amoyRpcUrl: string;
+    mumbaiRpcUrl: string;
+    deployerPrivateKey: string;
+    contractAddress: string;
+    polygonscanApiKey: string;
+    tokenName: string;
+    tokenSymbol: string;
+    tokenDecimals: number;
+    tokenMaxSupply: string;
+    tokenInitialSupply: string;
+    tokenValueUsd: number;
+    network: string;
+    chainId: number;
+}>;
+export default _default;

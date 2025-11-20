@@ -1,0 +1,1 @@
+{"version":3,"file":"sync-user.dto.js","sourceRoot":"","sources":["../../../../src/auth/dto/sync-user.dto.ts"],"names":[],"mappings":";;;;;;;;;;;;AAAA,qDAAuD;AACvD,6CAA8C;AAE9C,MAAa,WAAW;CASvB;AATD,kCASC;AADC;IAPC,IAAA,qBAAW,EAAC;QACX,WAAW,EAAE,qCAAqC;QAClD,QAAQ,EAAE,KAAK;QACf,OAAO,EAAE,WAAW;KACrB,CAAC;IACD,IAAA,4BAAU,GAAE;IACZ,IAAA,0BAAQ,GAAE;;iDACW"}

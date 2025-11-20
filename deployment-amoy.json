@@ -1,0 +1,15 @@
+{
+  "network": "amoy",
+  "chainId": "80002",
+  "contractAddress": "0xD5fc0F40278A2C1c5451Cbe229196290735B234B",
+  "deployer": "0xb1e29ee3AaE315453f4f98f822Fd72e647D7debf",
+  "deployedAt": "2025-11-06T21:39:20.207Z",
+  "tokenInfo": {
+    "name": "Rolley",
+    "symbol": "ROL",
+    "decimals": "18",
+    "totalSupply": "0.0",
+    "maxSupply": "1000000000.0",
+    "valueUsd": "100"
+  }
+}

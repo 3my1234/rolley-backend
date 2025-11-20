@@ -1,0 +1,40 @@
+# Coolify deployment configuration for Rolley Backend
+# This file helps Coolify understand how to deploy the service
+# Coolify will use the Dockerfile by default, but this provides metadata
+
+name: rolley-backend
+description: Rolley Platform Backend API (NestJS)
+
+# Build configuration
+build:
+  dockerfile: Dockerfile
+  context: .
+
+# Port configuration (Coolify will handle port mapping)
+# Using port 3003 to avoid conflict with friend's backend (3001)
+ports:
+  - "3003:3003"
+
+# Health check
+healthcheck:
+  path: /health
+  interval: 30
+  timeout: 10
+  retries: 3
+
+# Environment variables (set these in Coolify UI)
+# Required:
+# - DATABASE_URL
+# - PRIVY_APP_ID
+# - PRIVY_APP_SECRET
+# - JWT_SECRET
+# - POLYGON_RPC_URL
+# - PORT=3001
+# - FRONTEND_URL
+
+# Optional:
+# - REDIS_URL (if using Redis for queues)
+# - N8N_BASE_URL
+# - API_FOOTBALL_KEY
+# - GEMINI_API_KEY
+
