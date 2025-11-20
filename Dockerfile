@@ -31,19 +31,21 @@ RUN apk add --no-cache dumb-init
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install production dependencies only
+# Install production dependencies only (as root first)
 RUN npm ci --only=production && npm cache clean --force
 
-# Copy built application from builder
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+# Generate Prisma client (needed for runtime)
+RUN npx prisma generate
 
-# Create non-root user
+# Create non-root user first (before copying files)
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nestjs -u 1001
 
-# Change ownership
-RUN chown -R nestjs:nodejs /app
+# Copy built application from builder
+COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
+COPY --from=builder --chown=nestjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+
+# Switch to non-root user
 USER nestjs
 
 # Expose port (Coolify will map this)
