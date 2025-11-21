@@ -3,16 +3,21 @@ import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { UsdtListenerService } from './wallet/usdt-listener.service';
 import { execSync } from 'child_process';
+import * as path from 'path';
 
 async function bootstrap() {
   // Always run Prisma db push on startup to ensure schema is synced
   // This creates tables automatically from the Prisma schema
   try {
     console.log('🔄 Syncing database schema...');
-    execSync('npx prisma db push --skip-generate --accept-data-loss', { 
+    const prismaPath = path.join(process.cwd(), 'node_modules', '.bin', 'prisma');
+    const command = `node "${prismaPath}" db push --skip-generate --accept-data-loss`;
+    console.log(`Running: ${command}`);
+    execSync(command, { 
       stdio: 'inherit', 
       env: { ...process.env },
-      cwd: process.cwd()
+      cwd: process.cwd(),
+      shell: true
     });
     console.log('✅ Database schema synced successfully');
   } catch (error) {
