@@ -5,17 +5,19 @@ import { UsdtListenerService } from './wallet/usdt-listener.service';
 import { execSync } from 'child_process';
 
 async function bootstrap() {
-  // Run Prisma db push on startup to ensure schema is synced (in production)
-  // This is safer than migrations for initial setup
-  if (process.env.NODE_ENV === 'production' || process.env.RUN_MIGRATIONS === 'true') {
-    try {
-      console.log('🔄 Syncing database schema...');
-      execSync('npx prisma db push --skip-generate', { stdio: 'inherit', env: process.env });
-      console.log('✅ Database schema synced');
-    } catch (error) {
-      console.error('❌ Database schema sync failed:', error);
-      // Continue anyway - might be a transient error
-    }
+  // Always run Prisma db push on startup to ensure schema is synced
+  // This creates tables automatically from the Prisma schema
+  try {
+    console.log('🔄 Syncing database schema...');
+    execSync('npx prisma db push --skip-generate --accept-data-loss', { 
+      stdio: 'inherit', 
+      env: { ...process.env },
+      cwd: process.cwd()
+    });
+    console.log('✅ Database schema synced successfully');
+  } catch (error) {
+    console.error('❌ Database schema sync failed:', error);
+    console.error('⚠️  Continuing anyway - app may fail if tables are missing');
   }
 
   const app = await NestFactory.create(AppModule);
