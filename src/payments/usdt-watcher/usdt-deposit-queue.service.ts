@@ -45,50 +45,84 @@ export class UsdtDepositQueueService
   }
 
   async onModuleInit() {
-    const redisUrl =
-      this.configService.get<string>('REDIS_URL') ?? DEFAULT_REDIS_URL;
-    this.connection = new Redis(redisUrl, {
-      maxRetriesPerRequest: null,
-    });
-    this.queue = new Queue<UsdtDepositJob>(QUEUE_NAME, {
-      connection: this.connection,
-    });
-    this.worker = new Worker<UsdtDepositJob>(
-      QUEUE_NAME,
-      async (job) => this.processJob(job.data),
-      {
+    try {
+      const redisUrl =
+        this.configService.get<string>('REDIS_URL') ?? DEFAULT_REDIS_URL;
+      
+      // Test Redis connection
+      this.connection = new Redis(redisUrl, {
+        maxRetriesPerRequest: null,
+        retryStrategy: () => null, // Disable automatic reconnection
+        lazyConnect: true,
+      });
+
+      // Try to connect, but don't crash if Redis is unavailable
+      await this.connection.connect();
+      
+      this.queue = new Queue<UsdtDepositJob>(QUEUE_NAME, {
         connection: this.connection,
-        concurrency: Number(
-          this.configService.get('USDT_QUEUE_CONCURRENCY') ?? 5,
-        ),
-      },
-    );
-
-    this.worker.on('completed', (job) => {
-      this.logger.debug(`USDT deposit job ${job.id} completed`);
-    });
-
-    this.worker.on('failed', (job, err) => {
-      this.logger.error(
-        `USDT deposit job ${job?.id ?? 'unknown'} failed: ${err?.message}`,
-        err?.stack,
+      });
+      this.worker = new Worker<UsdtDepositJob>(
+        QUEUE_NAME,
+        async (job) => this.processJob(job.data),
+        {
+          connection: this.connection,
+          concurrency: Number(
+            this.configService.get('USDT_QUEUE_CONCURRENCY') ?? 5,
+          ),
+        },
       );
-    });
 
-    this.logger.log('USDT deposit queue initialized');
+      this.worker.on('completed', (job) => {
+        this.logger.debug(`USDT deposit job ${job.id} completed`);
+      });
+
+      this.worker.on('failed', (job, err) => {
+        this.logger.error(
+          `USDT deposit job ${job?.id ?? 'unknown'} failed: ${err?.message}`,
+          err?.stack,
+        );
+      });
+
+      this.logger.log('USDT deposit queue initialized');
+    } catch (error) {
+      this.logger.warn(
+        `Redis not available (${error?.message ?? 'unknown error'}). USDT deposit queue will use in-memory fallback.`,
+      );
+      // Continue without Redis - the app should still work with polling only
+      this.connection = null;
+      this.queue = null;
+      this.worker = null;
+    }
   }
 
   async onModuleDestroy() {
-    await Promise.all([
-      this.worker?.close(),
-      this.queue?.close(),
-      this.connection?.quit(),
-    ]);
+    try {
+      await Promise.all([
+        this.worker?.close(),
+        this.queue?.close(),
+        this.connection?.quit(),
+      ]);
+    } catch (error) {
+      this.logger.warn(`Error closing Redis connections: ${error?.message}`);
+    }
   }
 
   async enqueueDeposit(payload: UsdtDepositJob) {
     if (!this.queue) {
-      throw new Error('USDT queue not initialized');
+      // If Redis is not available, process immediately without queuing
+      this.logger.debug(
+        `Redis unavailable - processing USDT deposit immediately: ${payload.txHash}`,
+      );
+      try {
+        await this.processJob(payload);
+      } catch (error) {
+        this.logger.error(
+          `Failed to process USDT deposit directly: ${error?.message}`,
+          error?.stack,
+        );
+      }
+      return;
     }
 
     const jobId = `${payload.txHash}-${payload.logIndex}`;

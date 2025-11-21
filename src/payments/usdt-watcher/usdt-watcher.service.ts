@@ -240,10 +240,9 @@ export class UsdtWatcherService implements OnModuleInit, OnModuleDestroy {
         this.scheduleReconnect();
       });
 
-      this.websocketProvider.on('close', () => {
-        this.logger.warn('Polygon websocket closed. Attempting reconnect.');
-        this.scheduleReconnect();
-      });
+      // Note: ethers.js v6 doesn't support 'close' as a ProviderEvent
+      // Reconnection is handled via error events and polling fallback
+      // The polling loop will continue to work even if websocket disconnects
 
       this.logger.log('USDT websocket listener started');
     } catch (error) {
