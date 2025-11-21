@@ -2,8 +2,27 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { UsdtListenerService } from './wallet/usdt-listener.service';
+import { execSync } from 'child_process';
 
 async function bootstrap() {
+  // Run Prisma migrations on startup (in production)
+  if (process.env.NODE_ENV === 'production' || process.env.RUN_MIGRATIONS === 'true') {
+    try {
+      console.log('🔄 Running database migrations...');
+      execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+      console.log('✅ Migrations completed');
+    } catch (error) {
+      console.error('❌ Migration failed, trying db push as fallback...');
+      try {
+        execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
+        console.log('✅ Database schema synced');
+      } catch (pushError) {
+        console.error('❌ Database setup failed:', pushError);
+        // Don't exit - let the app start and show the error
+      }
+    }
+  }
+
   const app = await NestFactory.create(AppModule);
 
   // Enable CORS BEFORE body parsing (important for preflight requests)
