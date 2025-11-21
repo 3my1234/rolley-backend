@@ -16,9 +16,8 @@ async function bootstrap() {
     execSync(command, { 
       stdio: 'inherit', 
       env: { ...process.env },
-      cwd: process.cwd(),
-      shell: true
-    });
+      cwd: process.cwd()
+    } as any);
     console.log('✅ Database schema synced successfully');
   } catch (error) {
     console.error('❌ Database schema sync failed:', error);
