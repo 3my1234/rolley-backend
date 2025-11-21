@@ -8,8 +8,10 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install dependencies
-RUN npm ci
+# Install dependencies with retry logic for network issues
+RUN npm ci --maxsockets 1 --network-timeout 60000 || \
+    (sleep 5 && npm ci --maxsockets 1 --network-timeout 60000) || \
+    (sleep 10 && npm ci --maxsockets 1 --network-timeout 60000)
 
 # Copy source code
 COPY . .
