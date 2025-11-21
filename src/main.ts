@@ -5,21 +5,16 @@ import { UsdtListenerService } from './wallet/usdt-listener.service';
 import { execSync } from 'child_process';
 
 async function bootstrap() {
-  // Run Prisma migrations on startup (in production)
+  // Run Prisma db push on startup to ensure schema is synced (in production)
+  // This is safer than migrations for initial setup
   if (process.env.NODE_ENV === 'production' || process.env.RUN_MIGRATIONS === 'true') {
     try {
-      console.log('🔄 Running database migrations...');
-      execSync('npx prisma migrate deploy', { stdio: 'inherit' });
-      console.log('✅ Migrations completed');
+      console.log('🔄 Syncing database schema...');
+      execSync('npx prisma db push --skip-generate', { stdio: 'inherit', env: process.env });
+      console.log('✅ Database schema synced');
     } catch (error) {
-      console.error('❌ Migration failed, trying db push as fallback...');
-      try {
-        execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
-        console.log('✅ Database schema synced');
-      } catch (pushError) {
-        console.error('❌ Database setup failed:', pushError);
-        // Don't exit - let the app start and show the error
-      }
+      console.error('❌ Database schema sync failed:', error);
+      // Continue anyway - might be a transient error
     }
   }
 
