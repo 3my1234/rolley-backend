@@ -31,6 +31,7 @@ async function bootstrap() {
   const allowedOrigins = Array.from(new Set([
     frontendEnv,
     'http://localhost:5173',
+    'https://us0soc8ooo00kks888w8owcg.useguidr.com', // Production frontend
   ]));
 
   app.enableCors({
@@ -54,13 +55,31 @@ async function bootstrap() {
   
   console.log(`🚀 Backend running on http://localhost:${port}`);
 
-  // Start USDT deposit listener
+  // Start USDT deposit listener (non-blocking - don't crash if it fails)
   try {
     const usdtListener = app.get(UsdtListenerService);
-    await usdtListener.startListening();
+    usdtListener.startListening().catch((error) => {
+      console.warn('⚠️  USDT listener failed to start (non-fatal):', error);
+    });
   } catch (error) {
-    console.warn('⚠️  Could not start USDT listener:', error);
+    console.warn('⚠️  Could not start USDT listener (non-fatal):', error);
   }
+
+  // Handle unhandled errors gracefully (prevent crashes from WebSocket errors)
+  process.on('unhandledRejection', (reason, promise) => {
+    console.warn('⚠️  Unhandled Rejection at:', promise, 'reason:', reason);
+    // Don't crash - just log the error
+  });
+
+  process.on('uncaughtException', (error) => {
+    console.error('⚠️  Uncaught Exception (non-fatal):', error);
+    // Don't exit - just log the error
+    // Only exit on critical errors
+    if (error.message?.includes('EADDRINUSE') || error.message?.includes('port')) {
+      console.error('❌ Critical error: Port already in use');
+      process.exit(1);
+    }
+  });
 }
 
 bootstrap();

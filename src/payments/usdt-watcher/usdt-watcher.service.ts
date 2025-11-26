@@ -224,20 +224,30 @@ export class UsdtWatcherService implements OnModuleInit, OnModuleDestroy {
     }
 
     try {
+      // Create WebSocket provider and immediately attach error handlers
+      // to prevent unhandled errors from crashing the backend
       this.websocketProvider = new ethers.WebSocketProvider(wssUrl);
+      
+      // Attach error handler BEFORE any operations to catch connection errors
+      this.websocketProvider.on('error', (error) => {
+        this.logger.error('Polygon websocket error (handled)', error);
+        // Don't crash - just log and schedule reconnect
+        this.scheduleReconnect();
+      });
+
+      // Wrap WebSocket operations in try-catch to handle any synchronous errors
       const filter = {
         address: USDT_POLYGON_CONTRACT,
         topics: [ethers.id('Transfer(address,address,uint256)')],
       };
 
       this.websocketProvider.on(filter, async (log) => {
-        await this.handleLog(log);
-        await this.stateService.setLastProcessedBlock(log.blockNumber);
-      });
-
-      this.websocketProvider.on('error', (error) => {
-        this.logger.error('Polygon websocket error', error);
-        this.scheduleReconnect();
+        try {
+          await this.handleLog(log);
+          await this.stateService.setLastProcessedBlock(log.blockNumber);
+        } catch (error) {
+          this.logger.error('Error handling WebSocket log', error);
+        }
       });
 
       // Note: ethers.js v6 doesn't support 'close' as a ProviderEvent
@@ -247,9 +257,12 @@ export class UsdtWatcherService implements OnModuleInit, OnModuleDestroy {
       this.logger.log('USDT websocket listener started');
     } catch (error) {
       this.logger.error(
-        'Failed to establish Polygon websocket connection',
+        'Failed to establish Polygon websocket connection (non-fatal)',
         error,
       );
+      // Don't crash - just log and continue with polling only
+      this.websocketProvider = null;
+      // Optionally schedule reconnect, but don't crash if it fails
       this.scheduleReconnect();
     }
   }
