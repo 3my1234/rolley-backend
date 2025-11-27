@@ -14,6 +14,7 @@ import { TransactionsModule } from './transactions/transactions.module';
 import { AdminModule } from './admin/admin.module';
 import { UsdtWatcherModule } from './payments/usdt-watcher/usdt-watcher.module';
 import { HealthModule } from './health/health.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { HealthModule } from './health/health.module';
     AdminModule,
     UsdtWatcherModule,
     HealthModule,
+    AiModule,
   ],
 })
 export class AppModule {}
