@@ -13,7 +13,7 @@ export class AiService {
     private configService: ConfigService,
     private prisma: PrismaService,
   ) {
-    const config = this.configService.get<ReturnType<typeof aiConfig>>('ai');
+    const config = this.configService.get('ai') as { geminiApiKey?: string; footballAiUrl?: string } | undefined;
     this.genAI = new GoogleGenerativeAI(config?.geminiApiKey || '');
     this.footballAiUrl = config?.footballAiUrl || 'https://f4c4o880s8go0co48kkwsw00.useguidr.com';
   }
