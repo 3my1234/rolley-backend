@@ -9,6 +9,11 @@ export default registerAs('ai', () => {
   // Use env var if set, otherwise default to internal network (for Docker)
   const footballAiUrl = envUrl || defaultInternalUrl;
   
+  // Debug logging
+  console.log('🔍 AI Config Debug:');
+  console.log('  - FOOTBALL_AI_URL env var:', envUrl || '(not set)');
+  console.log('  - Selected URL:', footballAiUrl);
+  
   return {
     geminiApiKey: process.env.GEMINI_API_KEY,
     footballAiUrl,

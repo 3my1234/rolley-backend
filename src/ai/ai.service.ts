@@ -16,11 +16,12 @@ export class AiService {
     const config = this.configService.get('ai') as { geminiApiKey?: string; footballAiUrl?: string } | undefined;
     this.genAI = new GoogleGenerativeAI(config?.geminiApiKey || '');
     
-    // Use configured URL or default
-    const configuredUrl = config?.footballAiUrl || 'https://f4c4o880s8go0co48kkwsw00.useguidr.com';
-    this.footballAiUrl = configuredUrl;
+    // Use configured URL from config (which has the correct default)
+    this.footballAiUrl = config?.footballAiUrl || 'http://f4c4o880s8go0co48kkwsw00:8000';
     
     console.log(`🔧 Football AI Service URL configured: ${this.footballAiUrl}`);
+    console.log(`   - From config: ${config?.footballAiUrl || '(not in config)'}`);
+    console.log(`   - From env var: ${process.env.FOOTBALL_AI_URL || '(not set)'}`);
   }
 
   /**
