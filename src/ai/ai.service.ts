@@ -15,7 +15,15 @@ export class AiService {
   ) {
     const config = this.configService.get('ai') as { geminiApiKey?: string; footballAiUrl?: string } | undefined;
     this.genAI = new GoogleGenerativeAI(config?.geminiApiKey || '');
-    this.footballAiUrl = config?.footballAiUrl || 'https://f4c4o880s8go0co48kkwsw00.useguidr.com';
+    
+    // Use configured URL or default
+    const configuredUrl = config?.footballAiUrl || 'https://f4c4o880s8go0co48kkwsw00.useguidr.com';
+    
+    // For internal Docker network, try using HTTP instead of HTTPS
+    // Remove https:// and use http:// for internal communication
+    this.footballAiUrl = configuredUrl.replace(/^https:\/\//, 'http://');
+    
+    console.log(`🔧 Football AI Service URL: ${this.footballAiUrl}`);
   }
 
   /**
