@@ -27,8 +27,11 @@ export class AiService {
    * Get today's safe picks from Football AI service
    */
   async getSafePicks(): Promise<any> {
+    const url = `${this.footballAiUrl}/safe-picks/today`;
+    console.log(`🌐 Fetching safe picks from: ${url}`);
+    
     try {
-      const response = await fetch(`${this.footballAiUrl}/safe-picks/today`, {
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -37,14 +40,22 @@ export class AiService {
         signal: AbortSignal.timeout(60000), // 60 seconds
       });
 
+      console.log(`✅ Response status: ${response.status}`);
+      
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`❌ Error response: ${response.status} ${response.statusText}`);
         throw new Error(`Football AI service error: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
+      console.log(`✅ Successfully fetched safe picks: ${data.games_used || 0} games`);
       return data;
     } catch (error: any) {
-      console.error('Error fetching safe picks from Football AI:', error);
+      console.error('❌ Error fetching safe picks from Football AI:', error);
+      console.error(`   URL attempted: ${url}`);
+      console.error(`   Error type: ${error.name || 'Unknown'}`);
+      console.error(`   Error message: ${error.message || 'No message'}`);
       
       // Return a more informative error response instead of throwing
       // This allows the frontend to handle it gracefully
@@ -52,8 +63,11 @@ export class AiService {
         error: true,
         message: 'Football AI service is currently unavailable',
         details: error.message || 'Connection timeout',
+        errorType: error.name || 'Unknown',
+        errorCode: error.cause?.code || error.code || 'UNKNOWN',
         footballAiUrl: this.footballAiUrl,
-        suggestion: 'Please check if the Football AI service is running and accessible',
+        attemptedUrl: url,
+        suggestion: 'Check backend logs for detailed connection error. Verify Football AI service is accessible.',
         // Return empty picks so frontend can handle gracefully
         combo_odds: null,
         games_used: 0,
