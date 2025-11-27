@@ -14,6 +14,12 @@ export class AiController {
     return { message: 'AI module is working!', timestamp: new Date().toISOString() };
   }
 
+  @Get('test-connection')
+  @ApiOperation({ summary: 'Test connectivity to Football AI service' })
+  async testConnection() {
+    return this.aiService.testConnection();
+  }
+
   @Get('safe-picks')
   @ApiOperation({ summary: 'Get today\'s safe picks from Football AI' })
   @ApiResponse({ status: 200, description: 'Safe picks retrieved successfully' })
