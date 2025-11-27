@@ -141,11 +141,20 @@ export class AiService {
   /**
    * Generate daily AI picks and save to DailyEvent for admin review
    * This is the main workflow: AI generates picks -> Admin reviews -> Users see approved picks
+   * @param footballAiData Optional pre-fetched Football AI data (from n8n)
    */
-  async generateDailyPicks(): Promise<any> {
+  async generateDailyPicks(footballAiData?: any): Promise<any> {
     try {
       // Step 1: Get safe picks from Football AI service
-      const safePicks = await this.getSafePicks();
+      // If data is provided (e.g., from n8n), use it directly to avoid network issues
+      let safePicks;
+      if (footballAiData && !footballAiData.error) {
+        console.log('✅ Using pre-fetched Football AI data from n8n');
+        safePicks = footballAiData;
+      } else {
+        console.log('🌐 Fetching Football AI data directly...');
+        safePicks = await this.getSafePicks();
+      }
       
       if (!safePicks || !safePicks.picks || safePicks.picks.length === 0) {
         return {
