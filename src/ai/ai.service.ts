@@ -240,6 +240,66 @@ export class AiService {
   }
 
   /**
+   * Test connectivity to Football AI service
+   */
+  async testConnection(): Promise<any> {
+    const testUrls = [
+      'https://f4c4o880s8go0co48kkwsw00.useguidr.com/health',
+      'http://f4c4o880s8go0co48kkwsw00:8000/health',
+      'http://f4c4o880s8go0co48kkwsw00/health',
+    ];
+
+    const results = [];
+    
+    for (const url of testUrls) {
+      try {
+        console.log(`🧪 Testing: ${url}`);
+        const startTime = Date.now();
+        const response = await fetch(url, {
+          method: 'GET',
+          signal: AbortSignal.timeout(5000), // 5 second timeout
+        });
+        const duration = Date.now() - startTime;
+        
+        if (response.ok) {
+          const data = await response.json();
+          results.push({
+            url,
+            success: true,
+            status: response.status,
+            duration: `${duration}ms`,
+            data,
+          });
+          console.log(`✅ ${url} - SUCCESS (${duration}ms)`);
+        } else {
+          results.push({
+            url,
+            success: false,
+            status: response.status,
+            duration: `${duration}ms`,
+            error: `HTTP ${response.status}`,
+          });
+          console.log(`❌ ${url} - Failed: HTTP ${response.status}`);
+        }
+      } catch (error: any) {
+        results.push({
+          url,
+          success: false,
+          error: error.message || error.code || 'Unknown error',
+          errorCode: error.code,
+        });
+        console.log(`❌ ${url} - Error: ${error.message || error.code}`);
+      }
+    }
+
+    return {
+      testedUrls: results,
+      configuredUrl: this.footballAiUrl,
+      recommendation: results.find(r => r.success)?.url || 'None of the URLs are accessible',
+    };
+  }
+
+  /**
    * Generate human-readable analysis using Gemini (optional enhancement)
    */
   async analyzeMatches(matches: any[]) {
