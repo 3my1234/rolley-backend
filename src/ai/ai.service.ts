@@ -28,8 +28,8 @@ export class AiService {
         headers: {
           'Content-Type': 'application/json',
         },
-        // Add timeout
-        signal: AbortSignal.timeout(30000), // 30 seconds
+        // Add timeout - increased to 60 seconds
+        signal: AbortSignal.timeout(60000), // 60 seconds
       });
 
       if (!response.ok) {
@@ -40,7 +40,22 @@ export class AiService {
       return data;
     } catch (error: any) {
       console.error('Error fetching safe picks from Football AI:', error);
-      throw new Error(`Failed to fetch safe picks: ${error.message}`);
+      
+      // Return a more informative error response instead of throwing
+      // This allows the frontend to handle it gracefully
+      return {
+        error: true,
+        message: 'Football AI service is currently unavailable',
+        details: error.message || 'Connection timeout',
+        footballAiUrl: this.footballAiUrl,
+        suggestion: 'Please check if the Football AI service is running and accessible',
+        // Return empty picks so frontend can handle gracefully
+        combo_odds: null,
+        games_used: 0,
+        picks: [],
+        reason: 'Service unavailable',
+        confidence: 0,
+      };
     }
   }
 
@@ -54,7 +69,7 @@ export class AiService {
         headers: {
           'Content-Type': 'application/json',
         },
-        signal: AbortSignal.timeout(30000),
+        signal: AbortSignal.timeout(60000),
       });
 
       if (!response.ok) {
@@ -65,7 +80,12 @@ export class AiService {
       return data;
     } catch (error: any) {
       console.error('Error fetching raw predictions:', error);
-      throw new Error(`Failed to fetch raw predictions: ${error.message}`);
+      return {
+        error: true,
+        message: 'Football AI service is currently unavailable',
+        details: error.message || 'Connection timeout',
+        raw_predictions: [],
+      };
     }
   }
 
@@ -79,7 +99,7 @@ export class AiService {
         headers: {
           'Content-Type': 'application/json',
         },
-        signal: AbortSignal.timeout(30000),
+        signal: AbortSignal.timeout(60000),
       });
 
       if (!response.ok) {
@@ -90,7 +110,13 @@ export class AiService {
       return data;
     } catch (error: any) {
       console.error('Error fetching today\'s matches:', error);
-      throw new Error(`Failed to fetch matches: ${error.message}`);
+      return {
+        error: true,
+        message: 'Football AI service is currently unavailable',
+        details: error.message || 'Connection timeout',
+        matches: [],
+        count: 0,
+      };
     }
   }
 
