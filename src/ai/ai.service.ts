@@ -18,12 +18,9 @@ export class AiService {
     
     // Use configured URL or default
     const configuredUrl = config?.footballAiUrl || 'https://f4c4o880s8go0co48kkwsw00.useguidr.com';
+    this.footballAiUrl = configuredUrl;
     
-    // For internal Docker network, try using HTTP instead of HTTPS
-    // Remove https:// and use http:// for internal communication
-    this.footballAiUrl = configuredUrl.replace(/^https:\/\//, 'http://');
-    
-    console.log(`🔧 Football AI Service URL: ${this.footballAiUrl}`);
+    console.log(`🔧 Football AI Service URL configured: ${this.footballAiUrl}`);
   }
 
   /**
