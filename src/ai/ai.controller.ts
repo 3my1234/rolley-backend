@@ -74,7 +74,7 @@ export class AiController {
     
     // Try API key auth (for n8n)
     if (!isAuthorized) {
-      const expectedApiKey = this.configService.get<string>('n8n')?.webhookSecret || process.env.N8N_WEBHOOK_SECRET;
+      const expectedApiKey = process.env.N8N_WEBHOOK_SECRET;
       if (apiKey && expectedApiKey && apiKey === expectedApiKey) {
         isAuthorized = true;
       }
