@@ -237,14 +237,24 @@ export class AiService {
           eventId: dailyEvent.id,
           matches: matches.length,
           totalOdds: totalOdds,
-          confidence: safePicks.confidence,
-          reason: safePicks.reason,
-          picks: safePicks.picks,
+          confidence: safePicks.confidence || 0,
+          reason: safePicks.reason || 'AI picks generated successfully',
+          picks: safePicks.picks || [],
         },
       };
     } catch (error: any) {
-      console.error('Error generating daily picks:', error);
-      throw new Error(`Failed to generate daily picks: ${error.message}`);
+      console.error('❌ Error generating daily picks:', error);
+      console.error('   Error details:', {
+        message: error.message,
+        stack: error.stack?.substring(0, 500),
+      });
+      // Return a proper error response instead of throwing
+      return {
+        success: false,
+        message: `Failed to generate daily picks: ${error.message}`,
+        data: null,
+        error: error.message,
+      };
     }
   }
 
