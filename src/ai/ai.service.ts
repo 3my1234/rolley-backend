@@ -154,6 +154,16 @@ export class AiService {
       } else {
         console.log('🌐 Fetching Football AI data directly...');
         safePicks = await this.getSafePicks();
+        
+        // Check if we got an error response
+        if (safePicks?.error) {
+          return {
+            success: false,
+            message: safePicks.message || 'Football AI service unavailable',
+            data: null,
+            error: safePicks.details || safePicks.errorType,
+          };
+        }
       }
       
       if (!safePicks || !safePicks.picks || safePicks.picks.length === 0) {
@@ -161,6 +171,7 @@ export class AiService {
           success: false,
           message: 'No safe picks found for today',
           data: null,
+          reason: safePicks?.reason || 'No picks available',
         };
       }
 
