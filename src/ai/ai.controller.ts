@@ -46,6 +46,8 @@ export class AiController {
   }
 
   @Post('generate-daily-picks')
+  @UseGuards(JwtAuthGuard)  // Use same guard as other admin endpoints
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Generate daily AI picks and save for admin review. Can be called by admin (JWT) or n8n (API key + Football AI data).' })
   @ApiHeader({ name: 'X-API-Key', description: 'API key for n8n calls (optional if using JWT)', required: false })
   @ApiResponse({ status: 200, description: 'Daily picks generated successfully' })
@@ -53,47 +55,28 @@ export class AiController {
   async generateDailyPicks(
     @Request() req: any,
     @Headers('x-api-key') apiKey?: string,
-    @Headers('authorization') authHeader?: string,
     @Body() body?: { footballAiData?: any }
   ) {
-    // Check authentication: Either JWT (admin) or API key (n8n)
-    let isAuthorized = false;
-    
-    // Try JWT auth first (for admin dashboard)
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      try {
-        // This will be validated by the guard if present
-        // For now, allow if user context exists
-        if (req.user?.role === 'ADMIN') {
-          isAuthorized = true;
-        }
-      } catch (e) {
-        // JWT invalid, continue to API key check
-      }
+    // Check if user is admin (JWT auth from guard)
+    if (req.user?.role === 'ADMIN') {
+      // Admin authenticated via JWT - proceed
+      return this.aiService.generateDailyPicks(body?.footballAiData);
     }
     
-    // Try API key auth (for n8n)
-    if (!isAuthorized) {
-      const expectedApiKey = process.env.N8N_WEBHOOK_SECRET;
-      if (apiKey && expectedApiKey && apiKey === expectedApiKey) {
-        isAuthorized = true;
-      }
+    // Fallback: Try API key auth (for n8n)
+    const expectedApiKey = process.env.N8N_WEBHOOK_SECRET;
+    if (apiKey && expectedApiKey && apiKey === expectedApiKey) {
+      return this.aiService.generateDailyPicks(body?.footballAiData);
     }
     
     // If Football AI data is provided, allow without strict auth (n8n bridge mode)
     // This is a temporary workaround - in production, require API key
-    if (!isAuthorized && body?.footballAiData) {
+    if (body?.footballAiData) {
       console.log('⚠️ Allowing n8n call with Football AI data (no auth check)');
-      isAuthorized = true;
+      return this.aiService.generateDailyPicks(body?.footballAiData);
     }
     
-    if (!isAuthorized) {
-      throw new UnauthorizedException('Valid JWT token (admin) or API key (n8n) required');
-    }
-    
-    // If Football AI data is provided (e.g., from n8n), use it directly
-    // Otherwise, try to fetch from Football AI service
-    return this.aiService.generateDailyPicks(body?.footballAiData);
+    throw new UnauthorizedException('Admin access required (JWT token) or valid API key (n8n)');
   }
 
   @Post('analyze-matches')
