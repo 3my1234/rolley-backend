@@ -185,22 +185,23 @@ export class AiService {
       // Step 2: Format picks into DailyEvent matches format
       const matches = safePicks.picks.map((pick: any) => {
         // Parse match string (e.g., "Arsenal vs Sheffield United")
-        const matchParts = pick.match.split(' vs ');
-        const homeTeam = matchParts[0]?.trim() || '';
-        const awayTeam = matchParts[1]?.trim() || '';
+        const matchParts = pick.match?.split(' vs ') || [];
+        const homeTeam = matchParts[0]?.trim() || pick.home_team || 'Unknown';
+        const awayTeam = matchParts[1]?.trim() || pick.away_team || 'Unknown';
 
         return {
           id: `match-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           sport: 'football',
           homeTeam: homeTeam,
           awayTeam: awayTeam,
-          prediction: pick.market || 'over_0.5_goals',
+          prediction: pick.market || pick.market_type || 'over_0.5_goals',
           odds: pick.odds || 1.05,
           autoSelected: true, // Mark as AI-generated
           predictedOdds: pick.odds || 1.05,
           confidence: pick.confidence || 0.95,
           worstCaseSafe: pick.worstCaseSafe || false,
           safety_score: pick.safety_score || 0,
+          reasoning: pick.reasoning || pick.reason || 'High confidence pick with strong safety metrics.',
         };
       });
 
