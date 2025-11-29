@@ -16,9 +16,16 @@ export class AiService {
     const config = this.configService.get('ai') as { geminiApiKey?: string; footballAiUrl?: string } | undefined;
     this.genAI = new GoogleGenerativeAI(config?.geminiApiKey || '');
     
-    // Use configured URL from config
-    this.footballAiUrl = config?.footballAiUrl || 'https://f4c4o880s8go0co48kkwsw00.useguidr.com';
+    // Use configured URL from config, but always use public HTTPS URL (Docker internal networking doesn't work)
+    let configuredUrl = config?.footballAiUrl || 'https://f4c4o880s8go0co48kkwsw00.useguidr.com';
     
+    // Force public HTTPS URL if internal hostname detected
+    if (configuredUrl.includes(':8000') || configuredUrl.startsWith('http://f4c4o')) {
+      console.log(`⚠️ Detected internal hostname in FOOTBALL_AI_URL, switching to public URL`);
+      configuredUrl = 'https://f4c4o880s8go0co48kkwsw00.useguidr.com';
+    }
+    
+    this.footballAiUrl = configuredUrl;
     console.log(`🔧 Football AI Service URL configured: ${this.footballAiUrl}`);
   }
 
