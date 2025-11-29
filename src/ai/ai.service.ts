@@ -189,6 +189,9 @@ export class AiService {
         const homeTeam = matchParts[0]?.trim() || pick.home_team || 'Unknown';
         const awayTeam = matchParts[1]?.trim() || pick.away_team || 'Unknown';
 
+        // Extract match_data if available (contains enriched statistics)
+        const matchData = pick.match_data || {};
+        
         return {
           id: `match-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           sport: 'football',
@@ -202,6 +205,18 @@ export class AiService {
           worstCaseSafe: pick.worstCaseSafe || false,
           safety_score: pick.safety_score || 0,
           reasoning: pick.reasoning || pick.reason || 'High confidence pick with strong safety metrics.',
+          // Store detailed statistics for potential future display or analysis
+          // These fields are stored in the JSON and available for display/analysis
+          stats: {
+            home_xg: matchData.home_xg,
+            away_xg: matchData.away_xg,
+            home_form: matchData.home_form,
+            away_form: matchData.away_form,
+            h2h: matchData.h2h,
+            stats_source: matchData._stats_source || 'default',
+            enrichment_status: matchData._enrichment_status,
+            league: matchData.league,
+          },
         };
       });
 
