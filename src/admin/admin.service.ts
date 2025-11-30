@@ -41,6 +41,7 @@ export class AdminService {
     return this.prisma.dailyEvent.findMany({
       where: {
         adminReviewed: true,
+        status: 'PENDING', // Only return active (pending) published events
       },
       orderBy: { updatedAt: 'desc' },
       take: limit,
