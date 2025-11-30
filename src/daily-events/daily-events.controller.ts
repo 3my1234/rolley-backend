@@ -50,6 +50,10 @@ export class DailyEventsController {
   @ApiResponse({ status: 200, description: 'History retrieved successfully' })
   async getEventHistory(@Request() req) {
     const history = await this.dailyEventsService.getEventHistory(50);
-    return { history };
+    // Ensure we return an array even if history is empty
+    return { 
+      history: Array.isArray(history) ? history : [],
+      success: true 
+    };
   }
 }
