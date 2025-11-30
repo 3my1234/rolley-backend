@@ -44,4 +44,12 @@ export class DailyEventsController {
       activeStakes,
     };
   }
+
+  @Get('history')
+  @ApiOperation({ summary: 'Get event history for user' })
+  @ApiResponse({ status: 200, description: 'History retrieved successfully' })
+  async getEventHistory(@Request() req) {
+    const history = await this.dailyEventsService.getEventHistory(50);
+    return { history };
+  }
 }

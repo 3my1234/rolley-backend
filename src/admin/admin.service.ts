@@ -283,4 +283,41 @@ export class AdminService {
       recentStakes,
     };
   }
+
+  async updateEventResult(eventId: string, status: string, result?: string) {
+    const validStatuses = ['WON', 'LOST', 'VOID', 'PENDING'];
+    
+    if (!validStatuses.includes(status)) {
+      throw new BadRequestException(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
+    }
+
+    const event = await this.getDailyEventById(eventId);
+
+    const updateData: any = {
+      status: status as any,
+    };
+
+    if (result !== undefined) {
+      updateData.result = result;
+    }
+
+    const updated = await this.prisma.dailyEvent.update({
+      where: { id: eventId },
+      data: updateData,
+    });
+
+    return updated;
+  }
+
+  async getEventHistory(limit = 50) {
+    return this.prisma.dailyEvent.findMany({
+      where: {
+        status: {
+          in: ['WON', 'LOST', 'VOID'],
+        },
+      },
+      orderBy: { date: 'desc' },
+      take: limit,
+    });
+  }
 }

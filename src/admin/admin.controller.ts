@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Request, Query, ForbiddenException, Post, Body } from '@nestjs/common';
+import { Controller, Get, UseGuards, Request, Query, ForbiddenException, Post, Body, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -101,5 +101,34 @@ export class AdminController {
     }
 
     return this.adminService.getDashboardStats();
+  }
+
+  @Post('daily-event/:id/result')
+  @ApiOperation({ summary: 'Update daily event result (Admin only)' })
+  @ApiResponse({ status: 200, description: 'Event result updated successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async updateEventResult(@Request() req, @Param('id') id: string, @Body() body: { status: string; result?: string }) {
+    if (req.user.role !== 'ADMIN') {
+      throw new ForbiddenException('Admin access required');
+    }
+
+    const event = await this.adminService.updateEventResult(id, body.status, body.result);
+    return { event };
+  }
+
+  @Get('history')
+  @ApiOperation({ summary: 'Get event history (Admin only)' })
+  @ApiResponse({ status: 200, description: 'History retrieved successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getEventHistory(@Request() req, @Query('limit') limit?: string) {
+    if (req.user.role !== 'ADMIN') {
+      throw new ForbiddenException('Admin access required');
+    }
+
+    const parsedLimit = Number(limit);
+    const take = !Number.isNaN(parsedLimit) && parsedLimit > 0 ? parsedLimit : 50;
+
+    const history = await this.adminService.getEventHistory(take);
+    return { history };
   }
 }
